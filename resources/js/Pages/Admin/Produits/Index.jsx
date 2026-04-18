@@ -26,6 +26,7 @@ export default function Index({ auth, produits, categories }) {
     const [isEditing, setIsEditing] = useState(false);
     const [previews, setPreviews] = useState([]);
 
+   
     const [variantData, setVariantData] = useState({
         taille: "",
         couleur: "",

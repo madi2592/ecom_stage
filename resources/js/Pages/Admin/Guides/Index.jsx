@@ -1,18 +1,30 @@
 import React, { useState } from "react";
-import { Head, useForm, router } from "@inertiajs/react";
+import { Head, useForm } from "@inertiajs/react";
 import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout";
+import ConfirmDialog from "@/Components/ConfirmDialog";
 import InputError from "@/Components/InputError";
 import InputLabel from "@/Components/InputLabel";
+import Modal from "@/Components/Modal";
 import PrimaryButton from "@/Components/PrimaryButton";
 import TextInput from "@/Components/TextInput";
-import Modal from "@/Components/Modal";
-import { Plus, Ruler, SquarePen, Trash2, X, ChevronRight } from "lucide-react";
+import { Plus, Ruler, SquarePen, Trash2, X } from "lucide-react";
 
 export default function Index({ auth, guides, categories }) {
     const [showModal, setShowModal] = useState(false);
     const [isEditing, setIsEditing] = useState(false);
+    const [deleteDialog, setDeleteDialog] = useState(false);
 
-    const { data, setData, post, patch, delete: destroy, processing, errors, reset, clearErrors } = useForm({
+    const {
+        data,
+        setData,
+        post,
+        patch,
+        delete: destroy,
+        processing,
+        errors,
+        reset,
+        clearErrors,
+    } = useForm({
         id: null,
         categorie_id: "",
         taille: "",
@@ -50,18 +62,33 @@ export default function Index({ auth, guides, categories }) {
     };
 
     const submit = (e) => {
-    e.preventDefault();
-    if (isEditing) {
-        // Assurez-vous que l'ID est bien passé ici
-        patch(route("admin.guides-tailles.update", data.id), {
-            onSuccess: () => closeModal(),
-        });
-    } else {
+        e.preventDefault();
+
+        if (isEditing) {
+            patch(route("admin.guides-tailles.update", data.id), {
+                onSuccess: () => closeModal(),
+            });
+            return;
+        }
+
         post(route("admin.guides-tailles.store"), {
             onSuccess: () => closeModal(),
         });
-    }
-};
+    };
+
+    const closeDeleteDialog = () => {
+        setDeleteDialog(false);
+    };
+
+    const confirmDelete = () => {
+        if (!deleteDialog) {
+            return;
+        }
+
+        destroy(route("admin.guides-tailles.destroy", deleteDialog), {
+            onFinish: () => closeDeleteDialog(),
+        });
+    };
 
     return (
         <AuthenticatedLayout
@@ -70,65 +97,95 @@ export default function Index({ auth, guides, categories }) {
         >
             <Head title="Guides des Tailles" />
 
-            <div className="py-12 bg-gray-50/50 min-h-screen">
+            <div className="min-h-screen bg-gray-50/50 py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
-                    <div className="p-4 sm:p-8 bg-white shadow sm:rounded-lg">
-                        <div className="flex items-center justify-between mb-8">
+                    <div className="bg-white p-4 shadow sm:rounded-lg sm:p-8">
+                        <div className="mb-8 flex items-center justify-between">
                             <div>
-                                <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
+                                <h3 className="flex items-center gap-2 text-lg font-bold text-gray-900">
                                     <Ruler className="text-indigo-600" size={20} />
                                     Référentiel des Tailles
                                 </h3>
-                                <p className="text-sm text-gray-500">Définissez les mesures par catégorie pour aider vos clients</p>
+                                <p className="text-sm text-gray-500">
+                                    Définissez les mesures par catégorie pour aider vos clients
+                                </p>
                             </div>
-                            <PrimaryButton onClick={openCreateModal} className="flex items-center gap-2">
+                            <PrimaryButton
+                                onClick={openCreateModal}
+                                className="flex items-center gap-2"
+                            >
                                 <Plus size={18} /> Ajouter une dimension
                             </PrimaryButton>
                         </div>
 
-                        <div className="overflow-x-auto border rounded-xl">
+                        <div className="overflow-x-auto rounded-xl border">
                             <table className="min-w-full divide-y divide-gray-200">
                                 <thead className="bg-gray-50">
                                     <tr>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Catégorie</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Taille / Label</th>
-                                        <th className="px-6 py-4 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">Mesures (cm)</th>
-                                        <th className="px-6 py-4 text-center text-xs font-bold text-gray-500 uppercase tracking-wider">Actions</th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Catégorie
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Taille / Label
+                                        </th>
+                                        <th className="px-6 py-4 text-left text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Mesures (cm)
+                                        </th>
+                                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-gray-500">
+                                            Actions
+                                        </th>
                                     </tr>
                                 </thead>
-                                <tbody className="bg-white divide-y divide-gray-200">
+
+                                <tbody className="divide-y divide-gray-200 bg-white">
                                     {guides.map((guide) => (
-                                        <tr key={guide.id} className="hover:bg-gray-50 transition-colors">
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="text-sm font-medium text-gray-900">{guide.categorie?.nom}</span>
+                                        <tr
+                                            key={guide.id}
+                                            className="transition-colors hover:bg-gray-50"
+                                        >
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                <span className="text-sm font-medium text-gray-900">
+                                                    {guide.categorie?.nom}
+                                                </span>
                                             </td>
-                                            <td className="px-6 py-4 whitespace-nowrap">
-                                                <span className="px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-xs font-bold border border-indigo-100">
+                                            <td className="whitespace-nowrap px-6 py-4">
+                                                <span className="rounded-full border border-indigo-100 bg-indigo-50 px-3 py-1 text-xs font-bold text-indigo-700">
                                                     {guide.taille} {guide.pointure && `(${guide.pointure})`}
                                                 </span>
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="text-xs text-gray-600 grid grid-cols-3 gap-4">
-                                                    {guide.poitrine_cm && <span>Poitrine: <b>{guide.poitrine_cm}</b></span>}
-                                                    {guide.taille_cm && <span>Taille: <b>{guide.taille_cm}</b></span>}
-                                                    {guide.hanches_cm && <span>Hanches: <b>{guide.hanches_cm}</b></span>}
+                                                <div className="grid grid-cols-3 gap-4 text-xs text-gray-600">
+                                                    {guide.poitrine_cm && (
+                                                        <span>
+                                                            Poitrine: <b>{guide.poitrine_cm}</b>
+                                                        </span>
+                                                    )}
+                                                    {guide.taille_cm && (
+                                                        <span>
+                                                            Taille: <b>{guide.taille_cm}</b>
+                                                        </span>
+                                                    )}
+                                                    {guide.hanches_cm && (
+                                                        <span>
+                                                            Hanches: <b>{guide.hanches_cm}</b>
+                                                        </span>
+                                                    )}
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 text-center">
                                                 <div className="flex justify-center gap-3">
-                                                    <button onClick={() => openEditModal(guide)} className="text-amber-500 hover:text-amber-700 transition-colors">
+                                                    <button
+                                                        onClick={() => openEditModal(guide)}
+                                                        className="text-amber-500 transition-colors hover:text-amber-700"
+                                                    >
                                                         <SquarePen size={18} />
                                                     </button>
-                                                    <button 
-    onClick={() => {
-        if (confirm("Supprimer cette ligne ?")) {
-            router.delete(route("admin.guides-tailles.destroy", guide.id));
-        }
-    }}
-    className="text-red-500 hover:text-red-700"
->
-    <Trash2 size={18} />
-</button>
+                                                    <button
+                                                        onClick={() => setDeleteDialog(guide.id)}
+                                                        className="text-red-500 hover:text-red-700"
+                                                    >
+                                                        <Trash2 size={18} />
+                                                    </button>
                                                 </div>
                                             </td>
                                         </tr>
@@ -140,32 +197,36 @@ export default function Index({ auth, guides, categories }) {
                 </div>
             </div>
 
-            {/* Modal de Saisie */}
             <Modal show={showModal} onClose={closeModal} maxWidth="2xl">
                 <form onSubmit={submit} className="p-6">
-                    <div className="flex justify-between items-center border-b pb-4 mb-6">
+                    <div className="mb-6 flex items-center justify-between border-b pb-4">
                         <h2 className="text-lg font-bold text-gray-900">
                             {isEditing ? "Modifier la dimension" : "Nouvelle dimension"}
                         </h2>
-                        <button type="button" onClick={closeModal} className="text-gray-400 hover:text-gray-600">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="text-gray-400 hover:text-gray-600"
+                        >
                             <X size={20} />
                         </button>
                     </div>
 
                     <div className="flex flex-col gap-6">
-                        {/* Ligne 1 : Catégorie et Nom de taille */}
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                             <div>
                                 <InputLabel value="Catégorie concernée" />
                                 <select
                                     value={data.categorie_id}
                                     onChange={(e) => setData("categorie_id", e.target.value)}
-                                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm text-sm focus:ring-indigo-500"
+                                    className="mt-1 block w-full rounded-md border-gray-300 text-sm shadow-sm focus:ring-indigo-500"
                                     required
                                 >
                                     <option value="">Sélectionner...</option>
                                     {categories.map((c) => (
-                                        <option key={c.id} value={c.id}>{c.nom}</option>
+                                        <option key={c.id} value={c.id}>
+                                            {c.nom}
+                                        </option>
                                     ))}
                                 </select>
                                 <InputError message={errors.categorie_id} />
@@ -182,9 +243,10 @@ export default function Index({ auth, guides, categories }) {
                             </div>
                         </div>
 
-                        {/* Ligne 2 : Mesures détaillées */}
-                        <div className="bg-gray-50 p-4 rounded-xl border border-gray-100">
-                            <h4 className="text-xs font-bold text-gray-500 uppercase tracking-widest mb-4">Mesures en centimètres (Optionnel)</h4>
+                        <div className="rounded-xl border border-gray-100 bg-gray-50 p-4">
+                            <h4 className="mb-4 text-xs font-bold uppercase tracking-widest text-gray-500">
+                                Mesures en centimètres (Optionnel)
+                            </h4>
                             <div className="grid grid-cols-3 gap-4">
                                 <div>
                                     <InputLabel value="Poitrine" />
@@ -219,7 +281,6 @@ export default function Index({ auth, guides, categories }) {
                             </div>
                         </div>
 
-                        {/* Ligne 3 : Pied / Pointure */}
                         <div>
                             <InputLabel value="Pointure (Si applicable)" />
                             <TextInput
@@ -232,7 +293,11 @@ export default function Index({ auth, guides, categories }) {
                     </div>
 
                     <div className="mt-8 flex justify-end gap-3 border-t pt-6">
-                        <button type="button" onClick={closeModal} className="text-sm font-bold text-gray-500 hover:text-gray-700">
+                        <button
+                            type="button"
+                            onClick={closeModal}
+                            className="text-sm font-bold text-gray-500 hover:text-gray-700"
+                        >
                             Annuler
                         </button>
                         <PrimaryButton disabled={processing}>
@@ -241,6 +306,16 @@ export default function Index({ auth, guides, categories }) {
                     </div>
                 </form>
             </Modal>
+
+            <ConfirmDialog
+                show={Boolean(deleteDialog)}
+                title="Supprimer cette dimension ?"
+                message="Cette ligne sera supprimée définitivement du guide des tailles."
+                confirmText="Oui, supprimer"
+                onClose={closeDeleteDialog}
+                onConfirm={confirmDelete}
+                processing={processing}
+            />
         </AuthenticatedLayout>
     );
 }

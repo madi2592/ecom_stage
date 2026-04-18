@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\GuideTailleController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\CategorieController;
 use App\Http\Controllers\ImageProduitController;
+use App\Http\Controllers\PanierController;
 use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ShopController;
@@ -19,6 +20,15 @@ Route::get('/', [ShopController::class, 'index'])->name('shop.index');
 Route::get('/catalogue', [ShopController::class, 'catalogue'])->name('shop.catalogue');
 Route::get('/produit/{slug}', [ShopController::class, 'show'])->name('shop.show');
 Route::get('/api/search', [ShopController::class, 'search'])->name('api.search');
+
+//Ajout de produit au Panier.
+Route::prefix('panier')->name('panier.')->group(function () {
+    Route::get('/', [PanierController::class, 'index'])->name('index');
+    Route::post('/ajouter', [PanierController::class, 'ajouter'])->name('ajouter');
+    Route::patch('/update/{cartKey}', [PanierController::class, 'updateQuantite'])->name('update');
+    Route::delete('/supprimer/{cartKey}', [PanierController::class, 'supprimer'])->name('supprimer');
+    Route::delete('/vider', [PanierController::class, 'vider'])->name('vider');
+    });
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [

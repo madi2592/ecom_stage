@@ -31,7 +31,7 @@ class GuideTailleController extends Controller
 
         GuideTaille::create($validated);
 
-        return back()->with('success', 'Guide ajouté avec succès.');
+        return back()->with('success', "✨ Excellent ! Le nouvel élément a été ajouté avec succès.");
     }
 
     // Correction du paramètre : $guideTaille -> $guide_taille
@@ -48,13 +48,13 @@ class GuideTailleController extends Controller
 
         $guides_taille->update($validated);
 
-        return back()->with('success', 'Guide mis à jour.');
+        return back()->with('success', '✅ Mise à jour effectuée avec succès.');
     }
 
     // Correction du paramètre : $guideTaille -> $guides_taille
     public function destroy(GuideTaille $guides_taille)
     {
         $guides_taille->delete();
-        return back()->with('success', 'Guide supprimé.');
+        return back()->with('success', "❎ Action confirmée : L'élément a été supprimé définitivement.");
     }
 }
