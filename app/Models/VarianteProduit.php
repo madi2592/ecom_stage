@@ -7,10 +7,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class VarianteProduit extends Model
 {
-    protected $fillable = ['produit_id', 'taille', 'couleur', 'stock', 'image_url'];
+    // On précise la table car elle est au pluriel mais complexe
+    protected $table = 'variante_produits';
+
+    protected $fillable = [
+        'produit_id',
+        'taille',
+        'couleur',
+        'stock',
+        'image_url'
+    ];
 
     public function produit(): BelongsTo
     {
-        return $this->belongsTo(Produit::class);
+        return $this->belongsTo(Produit::class , 'produit_id');
     }
 }

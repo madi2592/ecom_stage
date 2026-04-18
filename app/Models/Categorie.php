@@ -11,7 +11,6 @@ class Categorie extends Model
 {
     protected $fillable = ['nom', 'slug', 'parent_id', 'description'];
 
-    // Cette fonction s'exécute automatiquement lors de la création d'une catégorie
     protected static function boot()
     {
         parent::boot();
@@ -22,7 +21,24 @@ class Categorie extends Model
         });
     }
 
-    // Relation pour les sous-catégories (selon ton diagramme)
+    /**
+     * RELATION MANQUANTE : Une catégorie possède plusieurs produits
+     * C'est cette méthode que le ShopController appelle via withCount('produits')
+     */
+    public function produits(): HasMany
+    {
+        return $this->hasMany(Produit::class);
+    }
+
+    /**
+     * RELATION : Une catégorie peut avoir plusieurs lignes de guide de tailles
+     */
+    public function guides(): HasMany
+    {
+        return $this->hasMany(GuideTaille::class);
+    }
+
+    // Relation pour les sous-catégories
     public function sousCategories(): HasMany
     {
         return $this->hasMany(Categorie::class, 'parent_id');

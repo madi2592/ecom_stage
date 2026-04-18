@@ -1,19 +1,33 @@
 <?php
 
+use App\Http\Controllers\Admin\GuideTailleController;
+use App\Http\Controllers\Admin\SettingController;
+use App\Http\Controllers\CategorieController;
+use App\Http\Controllers\ImageProduitController;
+use App\Http\Controllers\ProduitController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\CategorieController; 
+use App\Http\Controllers\ShopController;
+use App\Http\Controllers\SliderController;
+use App\Http\Controllers\VarianteController;
 use Illuminate\Foundation\Application;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
-Route::get('/', function () {
-    return Inertia::render('Welcome', [
-        'canLogin' => Route::has('login'),
-        'canRegister' => Route::has('register'),
-        'laravelVersion' => Application::VERSION,
-        'phpVersion' => PHP_VERSION,
-    ]);
-});
+// La racine du site affiche maintenant la boutique (Front-office)
+// Routes Boutique Public
+Route::get('/', [ShopController::class, 'index'])->name('shop.index');
+Route::get('/catalogue', [ShopController::class, 'catalogue'])->name('shop.catalogue');
+Route::get('/produit/{slug}', [ShopController::class, 'show'])->name('shop.show');
+Route::get('/api/search', [ShopController::class, 'search'])->name('api.search');
+
+// Route::get('/', function () {
+//     return Inertia::render('Welcome', [
+//         'canLogin' => Route::has('login'),
+//         'canRegister' => Route::has('register'),
+//         'laravelVersion' => Application::VERSION,
+//         'phpVersion' => PHP_VERSION,
+//     ]);
+// });
 
 Route::get('/dashboard', function () {
     return Inertia::render('Dashboard');
@@ -30,6 +44,34 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
     // Routes pour les Catégories
     Route::get('/categories', [CategorieController::class, 'index'])->name('categories.index');
     Route::post('/categories', [CategorieController::class, 'store'])->name('categories.store');
+    Route::patch('/categories/{categorie}', [CategorieController::class, 'update'])->name('categories.update');
+    Route::delete('/categories/{categorie}', [CategorieController::class, 'destroy'])->name('categories.destroy');
+
+    // Produits (Toutes les routes CRUD d'un coup)
+    Route::post('/produits/{produit}', [ProduitController::class, 'update'])->name('produits.update.post');
+
+    // Route pour supprimer une image spécifique
+    Route::delete('/images/{image}', [ImageProduitController::class, 'destroy'])->name('images.destroy'); // update
+    Route::resource('produits', ProduitController::class);
+
+    // Routes spécifiques pour les variantes (Ajout/Suppression sans recharger la page)
+    Route::post('produits/{produit}/variantes', [VarianteController::class, 'store'])->name('variantes.store');
+    Route::delete('variantes/{variante}', [VarianteController::class, 'destroy'])->name('variantes.destroy');
+
+    // Routes pour les guides de tailles
+    Route::resource('guides-tailles', GuideTailleController::class)->parameters(['guides-tailles' => 'guides_taille'])->except(['create', 'edit', 'show']);
+
+    // Page de configuration principale
+    Route::get('/settings', [SettingController::class, 'index'])->name('settings.index');
+
+    // Gardez vos routes CRUD pour que les formulaires dans les Partials puissent envoyer les données
+    Route::resource('categories', CategorieController::class)->except(['index', 'show']);
+    Route::resource('guides-tailles', GuideTailleController::class)->parameters([
+        'guides-tailles' => 'guides_taille',
+    ])->except(['index', 'show']);
+
+    //Pour le Hero dynamique (slider)
+    Route::resource('sliders', SliderController::class);
 });
 
 require __DIR__.'/auth.php';

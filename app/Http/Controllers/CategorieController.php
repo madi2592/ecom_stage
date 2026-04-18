@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Models\Categorie;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
-use Illuminate\Support\Str;
 
 class CategorieController extends Controller
 {
@@ -18,7 +17,7 @@ class CategorieController extends Controller
         $categories = Categorie::with('parent')->get();
 
         return Inertia::render('Admin/Categories/Index', [
-            'categories' => $categories
+            'categories' => $categories,
         ]);
     }
 
@@ -39,6 +38,27 @@ class CategorieController extends Controller
 
         // 3. Redirection avec un message de succès
         return redirect()->route('admin.categories.index')
-                         ->with('success', 'Catégorie créée avec succès !');
+            ->with('success', 'Catégorie créée avec succès !');
+    }
+
+    // Supprime une catégorie
+    public function destroy(Categorie $categorie)
+    {
+        $categorie->delete();
+
+        return redirect()->back()->with('success', 'Catégorie supprimée !');
+    }
+
+    public function update(Request $request, Categorie $categorie) // <-- Correction ici (Categorie $categorie)
+    {
+        $validated = $request->validate([
+            'nom' => 'required|string|max:100',
+            'parent_id' => 'nullable|exists:categories,id',
+            'description' => 'nullable|string',
+        ]);
+
+        $categorie->update($validated);
+
+        return redirect()->back()->with('success', 'Catégorie mise à jour avec succès !');
     }
 }
