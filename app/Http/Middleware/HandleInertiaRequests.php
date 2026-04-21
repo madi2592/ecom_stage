@@ -40,12 +40,13 @@ class HandleInertiaRequests extends Middleware
                 'error'   => $request->session()->get('error'),
                 'warning' => $request->session()->get('warning'),
                 'info'    => $request->session()->get('info'),
+                'commande_confirmee' => $request->session()->get('commande_confirmee'),
             ],
-            // ✅ panier partagé globalement → accessible dans FrontLayout via usePage().props
+            // panier partagé globalement → accessible dans FrontLayout via usePage().props
             'panier' => function () {
                 return Session::get('panier', []);
             },
-            // ✅ cartCount dérivé du panier (nombre total d'articles)
+            // cartCount dérivé du panier (nombre total d'articles)
             'cartCount' => function () {
                 $panier = Session::get('panier', []);
                 return array_sum(array_column($panier, 'quantite'));

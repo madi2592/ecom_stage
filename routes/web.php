@@ -1,8 +1,10 @@
 <?php
 
 use App\Http\Controllers\Admin\GuideTailleController;
+use App\Http\Controllers\Admin\HistoriqueStatutController;
 use App\Http\Controllers\Admin\SettingController;
 use App\Http\Controllers\CategorieController;
+use App\Http\Controllers\CommandeController;
 use App\Http\Controllers\ImageProduitController;
 use App\Http\Controllers\PanierController;
 use App\Http\Controllers\ProduitController;
@@ -21,14 +23,31 @@ Route::get('/catalogue', [ShopController::class, 'catalogue'])->name('shop.catal
 Route::get('/produit/{slug}', [ShopController::class, 'show'])->name('shop.show');
 Route::get('/api/search', [ShopController::class, 'search'])->name('api.search');
 
-//Ajout de produit au Panier.
+// Ajout de produit au Panier.
 Route::prefix('panier')->name('panier.')->group(function () {
     Route::get('/', [PanierController::class, 'index'])->name('index');
     Route::post('/ajouter', [PanierController::class, 'ajouter'])->name('ajouter');
     Route::patch('/update/{cartKey}', [PanierController::class, 'updateQuantite'])->name('update');
     Route::delete('/supprimer/{cartKey}', [PanierController::class, 'supprimer'])->name('supprimer');
     Route::delete('/vider', [PanierController::class, 'vider'])->name('vider');
-    });
+});
+    // Page checkout
+    Route::get('/checkout', function () {
+        return Inertia::render('Shop/Checkout');
+    })->name('checkout');
+
+    // Soumission du formulaire de commande
+    Route::post('/commande', [CommandeController::class, 'store'])
+        ->name('commande.store');
+
+    // Page de suivi publique (double vérification CMD + téléphone)
+    Route::get('/suivi-commande', [CommandeController::class, 'suivi'])
+        ->name('commande.suivi');
+
+    // Téléchargement PDF de la facture
+    Route::get('/commande/{numeroCMD}/pdf', [CommandeController::class, 'pdf'])
+        ->name('commande.pdf');
+
 
 // Route::get('/', function () {
 //     return Inertia::render('Welcome', [
@@ -80,8 +99,31 @@ Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () 
         'guides-tailles' => 'guides_taille',
     ])->except(['index', 'show']);
 
-    //Pour le Hero dynamique (slider)
+    // Pour le Hero dynamique (slider)
     Route::resource('sliders', SliderController::class);
+
+    
+    // ──────────────────────────────────────────────────────────────
+    // BACK-OFFICE ADMIN — Historique & Statuts
+    // (À placer dans le groupe Route::middleware(['auth'])->prefix('admin'))
+    // ──────────────────────────────────────────────────────────────
+
+    Route::middleware(['auth'])->prefix('admin')->name('admin.')->group(function () {
+
+        // Affiche l'historique d'une commande
+        Route::get('/commandes/{commande}/historique', [HistoriqueStatutController::class, 'show'])
+            ->name('commandes.historique');
+
+        // Changer le statut d'une commande (POST car action avec effets de bord)
+        Route::post('/commandes/{commande}/statut', [HistoriqueStatutController::class, 'changerStatut'])
+            ->name('commandes.statut');
+
+        // Recycler une commande annulée
+        Route::post('/commandes/{commande}/recycler', [HistoriqueStatutController::class, 'recycler'])
+            ->name('commandes.recycler');
+
+    });
+    
 });
 
 require __DIR__.'/auth.php';
