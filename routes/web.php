@@ -47,6 +47,8 @@ Route::prefix('panier')->name('panier.')->group(function () {
     // Téléchargement PDF de la facture
     Route::get('/commande/{numeroCMD}/pdf', [CommandeController::class, 'pdf'])
         ->name('commande.pdf');
+        // Ajouter cette route avec les autres routes de commande
+    Route::get('/commande/{numero}/recu', [CommandeController::class, 'genererRecu'])->name('commande.recu');
 
 
 // Route::get('/', function () {

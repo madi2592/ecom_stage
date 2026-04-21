@@ -10,6 +10,7 @@ use App\Services\NumeroCommandeService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Session;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Inertia\Inertia;
 
 class CommandeController extends Controller
@@ -106,6 +107,19 @@ class CommandeController extends Controller
             // Snapshot du panier AVANT de le vider
             $panierSnapshot = array_values($panier);
 
+            // Sauvegarder les articles dans la session pour le PDF
+            Session::put('derniere_commande_articles', $panierSnapshot);
+            Session::put('derniere_commande_infos', [
+                'numero' => $numeroCommande,
+                'nom_complet' => $validated['nom_complet'],
+                'telephone' => $validated['telephone'],
+                'adresse' => $validated['adresse_livraison'] ?? $validated['google_maps_url'] ?? '',
+                'email' => $validated['email'] ?? null,
+                'note_importante' => $validated['note_importante'] ?? null,
+                'emplacement_supplementaire' => $validated['emplacement_supplementaire'] ?? null,
+                'total_ttc' => $total,
+            ]);
+
             // Vider le panier
             Session::forget('panier');
 
@@ -124,5 +138,45 @@ class CommandeController extends Controller
             DB::rollBack();
             return back()->withErrors(['error' => $e->getMessage()]);
         }
+    }
+
+    /**
+     * Génère le PDF du reçu de commande
+     */
+    public function genererRecu($numeroCommande)
+    {
+        // Récupérer la commande depuis la base de données
+        $commande = Commande::where('numero_commande', $numeroCommande)->firstOrFail();
+        
+        // Récupérer les lignes de commande
+        $lignes = LigneCommande::with('variante.produit')
+            ->where('commande_id', $commande->id)
+            ->get();
+        
+        // Formater les données pour le PDF
+        $articles = [];
+        foreach ($lignes as $ligne) {
+            $articles[] = [
+                'libelle' => $ligne->variante->produit->libelle,
+                'taille' => $ligne->variante->taille,
+                'couleur' => $ligne->variante->couleur,
+                'quantite' => $ligne->quantite,
+                'prix_unitaire' => $ligne->prix_unitaire,
+                'total' => $ligne->quantite * $ligne->prix_unitaire,
+            ];
+        }
+        
+        $data = [
+            'commande' => $commande,
+            'articles' => $articles,
+            'date' => now()->format('d/m/Y à H:i'),
+        ];
+        
+        // Générer le PDF
+        $pdf = Pdf::loadView('pdf.recu_commande', $data);
+        $pdf->setPaper('a4', 'portrait');
+        
+        // Télécharger le PDF
+        return $pdf->download('recu_commande_' . $numeroCommande . '.pdf');
     }
 }

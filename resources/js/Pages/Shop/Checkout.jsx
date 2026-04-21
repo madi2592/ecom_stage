@@ -45,8 +45,14 @@ const textareaClass = (error) =>
         : 'border-gray-100 focus:border-[#0315ff] focus:bg-white bg-gray-50/50'
     }`;
 
-// ── Écran de succès ────────────────────────────────────────────────────────
+
+// ── Écran de succès avec bouton d'impression ────────────────────────────────────────
 function SuccessScreen({ numeroCommande }) {
+    const handlePrintReceipt = () => {
+        // Ouvrir le PDF dans un nouvel onglet
+        window.open(`/commande/${numeroCommande}/recu`, '_blank');
+    };
+    
     return (
         <div className="min-h-screen bg-[#f9f9f9] flex items-center justify-center px-4 py-20">
             <div className="w-full max-w-lg bg-white rounded-3xl shadow-xl p-10 text-center">
@@ -84,19 +90,21 @@ function SuccessScreen({ numeroCommande }) {
                 </div>
 
                 <div className="flex flex-col gap-3">
-                    <Link
-                        href={`/suivi-commande`}
+                    {/* Bouton Imprimer le reçu */}
+                    <button
+                        onClick={handlePrintReceipt}
                         className="flex items-center justify-center gap-2 w-full bg-[#0315ff] text-white py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:bg-black transition-all"
                     >
                         <FileText size={15} />
-                        Suivre ma commande
-                    </Link>
+                        IMPRIMER LE REÇU
+                    </button>
+                    
                     <Link
                         href={route('shop.catalogue')}
                         className="flex items-center justify-center gap-2 w-full border-2 border-gray-100 text-gray-600 py-4 rounded-xl font-black uppercase tracking-[0.2em] text-xs hover:border-black hover:text-black transition-all"
                     >
                         <ShoppingBag size={15} />
-                        Continuer mes achats
+                        CONTINUER MES ACHATS
                     </Link>
                 </div>
             </div>
